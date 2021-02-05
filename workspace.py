@@ -2,8 +2,14 @@ import requests
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pandas as pd
+from matpl
 
 url = "https://www.crudemonitor.ca/crudes/dist.php?acr=MSW&time=recent"
+def main(url1, vol1, url2, vol2):
+    
+
+
+
 # scrapes the URL for percentages and temps
 # returns as panda
 def data(url):
