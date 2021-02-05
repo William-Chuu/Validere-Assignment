@@ -3,20 +3,43 @@ from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import pandas as pd
 from matplotlib import pyplot
+from scipy.optimize import curve_fit
+from numpy import arange
 
-url = "https://www.crudemonitor.ca/crudes/dist.php?acr=MSW&time=recent"
-
-def main(url1, vol1, url2, vol2):
-    x = data(url)
-    x.plot.scatter('percents', 'temp')
-    pyplot.show()
-
+url1 = "https://www.crudemonitor.ca/crudes/dist.php?acr=MSW&time=recent"
+url2 = "https://www.crudemonitor.ca/crudes/dist.php?acr=BCL&time=recent"
 
 # objective function to fit a line to data
-def objective(y, m, x, b):
+def objective(m, x, b):
     return(m * x + b)
 
+def main(url1, vol1, url2, vol2):
+    oil1, oil2 = data(url1), data(url2)
+    # choose the input and output variables
+    x1, y1 = oil1['percents'], oil1['temp']
+    x2, y2 = oil2['percents'], oil2['temp']
+    print(equation(x1, y1))
+    print(equation(x2, y2))
+    
+    # # plot input vs output
+    # pyplot.scatter(x, y)
+    # # define a sequence of inputs between the smallest and largest known inputs
+    # x_line = arange(min(x), max(x), 1)
+    # # calculate the output for the range
+    # y_line = objective(x_line, m, b)
+    # # create a line plot for the mapping function
+    # pyplot.plot(x_line, y_line, '--', color='red')
+    # pyplot.show()
 
+# takes x and y data as params
+# returns string of curve fit equation
+def equation(x, y):
+    # curve fit
+    # popt is type N-dimensional array (ndarray) with the optimal m and b values
+    popt, _ = curve_fit(objective, x, y)
+    # summarize the parameter values
+    m, b = popt
+    return ('y = %.5f * x + %.5f' % (m, b))
 
 # scrapes the URL for percentages and temps
 # returns as panda
@@ -57,6 +80,7 @@ def data(url):
     df = df.astype(float)
     # print(df['temp'].dtypes)
     return(df)
-    
-main(url, 0, 0, 0)
+
+# data(url1)
+main(url1, 0, url2, 0)
 
