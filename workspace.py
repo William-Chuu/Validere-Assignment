@@ -7,48 +7,66 @@ from scipy.optimize import curve_fit
 from numpy import arange
 
 url1 = "https://www.crudemonitor.ca/crudes/dist.php?acr=MSW&time=recent"
-url2 = "https://www.crudemonitor.ca/crudes/dist.php?acr=BCL&time=recent"
+url2 = "https://www.crudemonitor.ca/crudes/dist.php?acr=OSH&time=recent"
 
 # objective function to fit a line to data
 def objective(m, x, b):
     return(m * x + b)
 
 def main(url1, vol1, url2, vol2):
+    # multiplication factor from volumes
     tot_vol = vol1 + vol2
     oil1_factor = vol1 / tot_vol
     oil2_factor = vol2 / tot_vol
 
+    # call data function to retrieve distillation profiles in pandas
     oil1, oil2 = data(url1), data(url2)
 
-    # choose the input and output variables
+    # choose the independent and dependent variables
     x1, y1 = oil1['percents'], oil1['temp']
     x2, y2 = oil2['percents'], oil2['temp']
+
+    # using curve fit function, retrieve regression line slope and y-int
     m1, b1 = LOBF(x1, y1)
     m2, b2 = LOBF(x2, y2)
-    print(m1,b1,m2,b2)
+    # print(m1,b1,m2,b2)
 
+    # calculate mixture slope and y-int
     mixture_m = (oil1_factor * m1) + (oil2_factor * m2)
     mixture_b = (oil1_factor * b1) + (oil2_factor * b2)
 
+    # getting approximation mixture distillation profile data
     mixture_df = pd.DataFrame({'percents': [5,10,20,30,40,50,60,70,80,90,95,99], 'temp': [0,0,0,0,0,0,0,0,0,0,0,0]})
     mixture_df['temp'] = mixture_df.apply(lambda x: new_temps(x['percents'], mixture_m, mixture_b), axis=1)
     print(mixture_df)
 
-
+    mixture_x, mixture_y = mixture_df['percents'], mixture_df['temp']
 
     
+    oilplot(x1, y1, m1, b1, 'Oil 1', 'blue')
+    oilplot(x2, y2, m2, b2, 'Oil 2', 'orange')
+    oilplot(mixture_x, mixture_y, mixture_m, mixture_b, 'Mixture', 'green')
+    
+    pyplot.legend()
+    pyplot.xlabel('Percents [%]')
+    pyplot.ylabel('Temps [Degrees Celsius]')
+    pyplot.title('Crude Oil Mixture Distillation Curve')    
+    
+    pyplot.show()
 
-    # # plot input vs output
-    # pyplot.scatter(x, y)
-    # # define a sequence of inputs between the smallest and largest known inputs
-    # x_line = arange(min(x), max(x), 1)
-    # # calculate the output for the range
-    # y_line = objective(x_line, m, b)
-    # # create a line plot for the mapping function
-    # pyplot.plot(x_line, y_line, '--', color='red')
-    # pyplot.show()
+# Given x points, y points, slope, y-int, axis label and colour
+# plots 
+def oilplot(x, y, m, b, lab, col):
+    # plot input vs output
+    pyplot.scatter(x, y, label=lab)
+    # define a sequence of inputs between the smallest and largest known inputs
+    x_line = arange(min(x), max(x), 1)
+    # calculate the output for the range
+    y_line = objective(x_line, m, b)
+    # create a line plot for the mapping function
+    pyplot.plot(x_line, y_line, '--', color=col)
 
-# calculates new temp of mixture
+# calculates new temp of mixture using regression line equation
 def new_temps(percent, m, b):
     return((m * percent) + b)
 
@@ -67,6 +85,10 @@ def LOBF(x, y):
 def data(url):
     # http request on URL, retrieves HTML data as Python Object
     page = requests.get(url)
+    print(page)
+    # if page != '200':
+    #     return(url + ' is not a valid URL')
+
     # use appropriate parser to get html content
     soup = BeautifulSoup(page.content, 'html.parser')
 
@@ -102,6 +124,6 @@ def data(url):
     # print(df['temp'].dtypes)
     return(df)
 
-# data(url1)
-main(url1, 1, url2, 1)
+
+# main(url1, 1, url2, 1)
 
