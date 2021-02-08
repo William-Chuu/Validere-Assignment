@@ -125,5 +125,5 @@ def data(url):
     return(df)
 
 
-# main(url1, 1, url2, 1)
+main(url1, 1, url2, 1)
 
