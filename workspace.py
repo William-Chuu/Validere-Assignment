@@ -7,11 +7,11 @@ from scipy.optimize import curve_fit
 from numpy import arange
 
 url1 = "https://www.crudemonitor.ca/crudes/dist.php?acr=MSW&time=recent"
-url2 = "https://www.crudemonitor.ca/crudes/dist.php?acr=OSH&time=recent"
+url2 = "https://www.crudemonitor.ca/crudes/dist.php?acr=AHS&time=recent"
 
 # objective function to fit a line to data
-def objective(m, x, b):
-    return(m * x + b)
+def objective(x, a, b, c):
+	return (a * x + b * x**2 + c)
 
 def main(url1, vol1, url2, vol2):
     # multiplication factor from volumes
@@ -27,25 +27,26 @@ def main(url1, vol1, url2, vol2):
     x2, y2 = oil2['percents'], oil2['temp']
 
     # using curve fit function, retrieve regression line slope and y-int
-    m1, b1 = LOBF(x1, y1)
-    m2, b2 = LOBF(x2, y2)
+    a1, b1, c1 = regression(x1, y1)
+    a2, b2, c2 = regression(x2, y2)
     # print(m1,b1,m2,b2)
 
-    # calculate mixture slope and y-int
-    mixture_m = (oil1_factor * m1) + (oil2_factor * m2)
+    # calculate mixture variables
+    mixture_a = (oil1_factor * a1) + (oil2_factor * a2)
     mixture_b = (oil1_factor * b1) + (oil2_factor * b2)
+    mixture_c = (oil1_factor * c1) + (oil2_factor * c2)
 
     # getting approximation mixture distillation profile data
-    mixture_df = pd.DataFrame({'percents': [5,10,20,30,40,50,60,70,80,90,95,99], 'temp': [0,0,0,0,0,0,0,0,0,0,0,0]})
-    mixture_df['temp'] = mixture_df.apply(lambda x: new_temps(x['percents'], mixture_m, mixture_b), axis=1)
-    print(mixture_df)
+    mixture_df = pd.DataFrame({'percents': [5,10,20,30,40,50,60,70,80,90,95,99]})
+    mixture_df = predicted_values(mixture_a, mixture_b, mixture_c, mixture_df)
 
+    # for personal clarity
     mixture_x, mixture_y = mixture_df['percents'], mixture_df['temp']
 
-    
-    oilplot(x1, y1, m1, b1, 'Oil 1', 'blue')
-    oilplot(x2, y2, m2, b2, 'Oil 2', 'orange')
-    oilplot(mixture_x, mixture_y, mixture_m, mixture_b, 'Mixture', 'green')
+    #plot
+    oilplot(x1, y1, a1, b1, c1, 'Oil 1: {}'.format(equation_label(a1, b1, c1)), 'blue')
+    oilplot(x2, y2, a2, b2, c2, 'Oil 2: {}'.format(equation_label(a2, b2, c2)), 'orange')
+    oilplot(mixture_x, mixture_y, mixture_a, mixture_b, mixture_c, 'Mixture: {}'.format(equation_label(mixture_a, mixture_b, mixture_c)), 'green')
     
     pyplot.legend()
     pyplot.xlabel('Percents [%]')
@@ -54,40 +55,53 @@ def main(url1, vol1, url2, vol2):
     
     pyplot.show()
 
+    # return mixture data as pandas
+    return(mixture_df)
+
+def equation_label(a, b, c):
+    return ('{:.2f} * x + {:.2f} * x**2 + {:.2f}'.format(a, b, c))
+
 # Given x points, y points, slope, y-int, axis label and colour
 # plots 
-def oilplot(x, y, m, b, lab, col):
+def oilplot(x, y, a, b, c, lab, col):
     # plot input vs output
     pyplot.scatter(x, y, label=lab)
     # define a sequence of inputs between the smallest and largest known inputs
     x_line = arange(min(x), max(x), 1)
     # calculate the output for the range
-    y_line = objective(x_line, m, b)
+    y_line = objective(x_line, a, b, c)
     # create a line plot for the mapping function
     pyplot.plot(x_line, y_line, '--', color=col)
 
+# takes newly calculated regression coefficients and df with appropriate percents as parameters)
+# returns pandas with predicted temps
+def predicted_values(a, b, c, new_df):
+    # calculates new temp of mixture using regression line equation
+    def new_temps(percent, a, b, c):
+        return(a * percent + b * percent**2 + c)
+
+    new_df['temp'] = new_df.apply(lambda x: new_temps(x['percents'], a, b, c), axis=1)
+    return new_df
+
 # calculates new temp of mixture using regression line equation
-def new_temps(percent, m, b):
-    return((m * percent) + b)
+def new_temps(percent, a, b, c):
+    return(a * percent + b * percent**2 + c)
 
 # takes x and y data as params
 # returns string of curve fit slope and y-int
-def LOBF(x, y):
+def regression(x, y):
     # curve fit
     # popt is type N-dimensional array (ndarray) with the optimal m and b values
     popt, _ = curve_fit(objective, x, y)
     # summarize the parameter values
-    m, b = popt
-    return (m, b)
+    a, b, c = popt
+    return (a,b,c)
 
 # scrapes the URL for percentages and temps
 # returns as panda
 def data(url):
     # http request on URL, retrieves HTML data as Python Object
     page = requests.get(url)
-    print(page)
-    # if page != '200':
-    #     return(url + ' is not a valid URL')
 
     # use appropriate parser to get html content
     soup = BeautifulSoup(page.content, 'html.parser')
