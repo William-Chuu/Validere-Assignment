@@ -70,10 +70,12 @@ class Test(unittest.TestCase):
         print('oil2 estimated 50% point: {}'.format(oil2_df.iloc[5,1]))
         print('oil1 estimated 50% point: {}'.format(oil1_df.iloc[5,1]))
 
-        # mixture point is less than oil2
-        self.assertTrue(mixture_df.iloc[5,1] < oil2_df.iloc[5,1])
-        # mixture point is greater than oil1
-        self.assertTrue(mixture_df.iloc[5,1] > oil1_df.iloc[5,1])
+        if oil2_df.iloc[5,1] > oil1_df.iloc[5,1]:
+            self.assertTrue( oil1_df.iloc[5,1] < mixture_df.iloc[5,1] < oil2_df.iloc[5,1])
+        elif oil1_df.iloc[5,1] > oil2_df.iloc[5,1]:
+            self.assertTrue( oil2_df.iloc[5,1] < mixture_df.iloc[5,1] < oil1_df.iloc[5,1])
+        else:
+            self.assertTrue(False)
     
     # assuming you can use the volumes as a multiplication factor 
     # mixture curve should gravitate towards larger volume oil
