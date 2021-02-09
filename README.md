@@ -1,9 +1,11 @@
-# Validere-Assignment
+# About The Project
 
-# Purpose:
+# Getting Started
 
-# Install & Setup
-
-# Process:
 
 ## Initial Thoughts:
+
+## Assumptions
+
+
+## Process
