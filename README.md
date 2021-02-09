@@ -10,11 +10,17 @@ Tests are run in order to validate the model. A series of tests confirm the accu
 
 # Getting Started
 Activate virtual env:
-`env\Scripts\activate`
+```
+env\Scripts\activate
+```
 To run workspace:
-`python workspace.py`
+```
+python workspace.py
+```
 To run tests:
-`python test.py`
+```
+python test.py
+```
 
 # Initial Thoughts:
 Looking over the entire problem, I had no leads on how I would be able to combine 2 independent models into one mixture model without going into the chemical properties and reactions that would occur during this process. Using the fact that it is recommended in the problem to “think of the distillation profiles as snapshots of functions”, I knew that this was a key piece of information that I needed to leverage and from here, I had a general idea of how to approach this problem. 
