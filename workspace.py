@@ -26,21 +26,19 @@ def main(url1, vol1, url2, vol2):
     x1, y1 = oil1['percents'], oil1['temp']
     x2, y2 = oil2['percents'], oil2['temp']
 
-    # using curve fit function, retrieve regression line slope and y-int
+    # using curve fit function, retrieve regression curve coefficients
     a1, b1, c1 = regression(x1, y1)
     a2, b2, c2 = regression(x2, y2)
-    # print(m1,b1,m2,b2)
 
     # calculate mixture variables
     mixture_a = (oil1_factor * a1) + (oil2_factor * a2)
     mixture_b = (oil1_factor * b1) + (oil2_factor * b2)
     mixture_c = (oil1_factor * c1) + (oil2_factor * c2)
 
-    # getting approximation mixture distillation profile data
+    # estimate mixture data in pandas
     mixture_df = pd.DataFrame({'percents': [5,10,20,30,40,50,60,70,80,90,95,99]})
     mixture_df = predicted_values(mixture_a, mixture_b, mixture_c, mixture_df)
 
-    # for personal clarity
     mixture_x, mixture_y = mixture_df['percents'], mixture_df['temp']
 
     #plot
@@ -58,10 +56,15 @@ def main(url1, vol1, url2, vol2):
     # return mixture data as pandas
     return(mixture_df)
 
+#####
+# HELPER FUNCTIONS
+#####
+
+# for legend of graph
 def equation_label(a, b, c):
     return ('{:.2f} * x + {:.2f} * x**2 + {:.2f}'.format(a, b, c))
 
-# Given x points, y points, slope, y-int, axis label and colour
+# Given coefficients, axis label and line colour
 # plots 
 def oilplot(x, y, a, b, c, lab, col):
     # plot input vs output
@@ -121,23 +124,18 @@ def data(url):
     # convert to text
     temp = [temp.getText() for temp in temp_rows]
 
-    # temp in one line but easier for me to understand above
-    # temp = [[td.getText() for td in row.find('td', class_='celsius')]
-    #             for row in rows[1:11]]
-    
-    # print (temp)
-    # print (percents)
-
     # create dict to be able to make into pandas
     d = {'percents': percents, 'temp': temp}
     df = pd.DataFrame(d)
+
     # remove rows with '-'
     df = df[df.temp != '-']
     # convert all data types to floats
     df = df.astype(float)
     # print(df['temp'].dtypes)
+
     return(df)
 
 
-main(url1, 1, url2, 1)
+# main(url1, 1, url2, 1)
 
