@@ -136,6 +136,7 @@ def data(url):
 
     return(df)
 
-
-# main(url1, 1, url2, 1)
+if __name__ == "__main__":
+    # mixture approximated data points
+    print(main(url1, 1, url2, 1))
 
